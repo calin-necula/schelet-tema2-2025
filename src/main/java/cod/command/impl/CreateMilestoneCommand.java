@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import cod.command.ICommand;
 import cod.database.Database;
 import cod.model.Milestone;
+import cod.model.Ticket;
+import cod.model.TicketAction;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -33,24 +35,19 @@ public class CreateMilestoneCommand implements ICommand {
                 LocalDate start = db.getTestingPhaseStartDate();
                 LocalDate current = LocalDate.parse(timestampStr);
                 long daysElapsed = ChronoUnit.DAYS.between(start, current) + 1;
-
                 if (daysElapsed > 12) {
                     db.setTestingPhase(false);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            } catch (Exception e) { e.printStackTrace(); }
         }
 
         if (db.getUser(username) == null) {
             return buildError(result, "createMilestone", username, timestampStr, "Output eroare user inexistent");
         }
-
         if (!"MANAGER".equals(db.getUser(username).getRole())) {
             return buildError(result, "createMilestone", username, timestampStr,
                     "The user does not have permission to execute this command: required role MANAGER; user role " + db.getUser(username).getRole() + ".");
         }
-
         if (db.isTestingPhase()) {
             return buildError(result, "createMilestone", username, timestampStr,
                     "Milestones can be created only during development phase.");
@@ -89,8 +86,19 @@ public class CreateMilestoneCommand implements ICommand {
         }
         m.setBlockingFor(blocking);
 
-        db.addMilestone(m);
+        for (Integer tId : newTickets) {
+            Ticket t = db.getTicket(tId);
+            if (t != null) {
+                TicketAction action = new TicketAction();
+                action.setAction("ADDED_TO_MILESTONE");
+                action.setBy(username);
+                action.setTimestamp(timestampStr);
+                action.setMilestone(m.getName());
+                t.addHistory(action);
+            }
+        }
 
+        db.addMilestone(m);
         result.put("status", "success");
         return result;
     }

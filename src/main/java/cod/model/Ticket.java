@@ -2,11 +2,16 @@ package cod.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import cod.model.enums.TicketType;
 import java.util.ArrayList;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({
+        "id", "type", "title", "businessPriority", "status",
+        "createdAt", "solvedAt", "reportedBy", "matchingWords"
+})
 public class Ticket {
     private int id;
     private TicketType type;
@@ -15,7 +20,6 @@ public class Ticket {
     private String status;
 
     @JsonIgnore private String initialBusinessPriority;
-
     @JsonIgnore private String expertiseArea;
     @JsonIgnore private String description;
 
@@ -26,6 +30,8 @@ public class Ticket {
     private String createdAt = "";
 
     private List<Comment> comments = new ArrayList<>();
+
+    @JsonIgnore private List<TicketAction> history = new ArrayList<>();
 
     @JsonIgnore private String severity;
     @JsonIgnore private String expectedBehavior;
@@ -41,6 +47,14 @@ public class Ticket {
 
     public Ticket() {
         this.status = "OPEN";
+    }
+
+    public void addHistory(TicketAction action) {
+        this.history.add(action);
+    }
+
+    public List<TicketAction> getHistory() {
+        return history;
     }
 
     public int getId() { return id; }

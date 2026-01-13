@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import cod.command.ICommand;
 import cod.database.Database;
 import cod.model.Ticket;
+import cod.model.TicketAction;
 import cod.model.User;
 
 public class UndoAssignTicketCommand implements ICommand {
@@ -21,15 +22,19 @@ public class UndoAssignTicketCommand implements ICommand {
         Database db = Database.getInstance();
         ObjectNode result = mapper.createObjectNode();
         String username = args.has("username") ? args.get("username").asText() : "";
+        String timestamp = args.has("timestamp") ? args.get("timestamp").asText() : "";
         int ticketId = args.has("ticketID") ? args.get("ticketID").asInt() : -1;
 
         User user = db.getUser(username);
-        if (user == null) {
-            return null;
-        }
-
         Ticket t = db.getTicket(ticketId);
-        if (t != null && username.equals(t.getAssignedTo())) {
+
+        if (user != null && t != null && username.equals(t.getAssignedTo())) {
+            TicketAction action = new TicketAction();
+            action.setAction("DE-ASSIGNED");
+            action.setBy(username);
+            action.setTimestamp(timestamp);
+            t.addHistory(action);
+
             t.setAssignedTo("");
             t.setAssignedAt("");
             t.setStatus("OPEN");

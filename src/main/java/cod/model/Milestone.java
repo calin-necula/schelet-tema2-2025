@@ -30,6 +30,7 @@ public class Milestone {
 
     public Milestone() {}
 
+    // ... (Getters standard) ...
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public List<String> getBlockingFor() { return blockingFor; }
@@ -88,7 +89,7 @@ public class Milestone {
     public Double getCompletionPercentage() {
         if (tickets.isEmpty()) return 0.0;
         double closed = getClosedTickets().size();
-        return Math.round((closed / tickets.size()) * 100.0 * 100.0) / 100.0;
+        return Math.round((closed / tickets.size()) * 100.0) / 100.0;
     }
 
     public List<RepartitionEntry> getRepartition() {
@@ -114,10 +115,28 @@ public class Milestone {
 
     public void calculateTimeFields(String currentTimestamp) {
         if (currentTimestamp == null || currentTimestamp.isEmpty()) return;
-        LocalDate current = LocalDate.parse(currentTimestamp);
-        LocalDate due = LocalDate.parse(this.dueDate);
 
-        long diff = ChronoUnit.DAYS.between(current, due);
+        LocalDate comparisonDate = LocalDate.parse(currentTimestamp);
+
+        if ("COMPLETED".equals(this.status)) {
+            Database db = Database.getInstance();
+            LocalDate maxSolved = null;
+            for(Integer tId : tickets) {
+                Ticket t = db.getTicket(tId);
+                if(t != null && t.getSolvedAt() != null && !t.getSolvedAt().isEmpty()) {
+                    LocalDate solved = LocalDate.parse(t.getSolvedAt());
+                    if(maxSolved == null || solved.isAfter(maxSolved)) {
+                        maxSolved = solved;
+                    }
+                }
+            }
+            if (maxSolved != null) {
+                comparisonDate = maxSolved;
+            }
+        }
+
+        LocalDate due = LocalDate.parse(this.dueDate);
+        long diff = ChronoUnit.DAYS.between(comparisonDate, due);
 
         if (diff >= 0) {
             this.daysUntilDueVal = (int) diff + 1;

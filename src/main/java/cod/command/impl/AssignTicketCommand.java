@@ -8,9 +8,10 @@ import cod.database.Database;
 import cod.model.Developer;
 import cod.model.Milestone;
 import cod.model.Ticket;
+import cod.model.TicketAction;
 import cod.model.User;
 import cod.model.enums.Seniority;
-import cod.model.enums.TicketType;
+import cod.model.enums.TicketType; // <--- Importul care lipsea
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,17 +78,28 @@ public class AssignTicketCommand implements ICommand {
         Developer dev = (Developer) user;
 
         String expError = checkExpertise(dev.getExpertiseArea(), t.getExpertiseArea(), username, ticketId);
-        if (expError != null) {
-            return buildError(result, "assignTicket", username, timestamp, expError);
-        }
+        if (expError != null) return buildError(result, "assignTicket", username, timestamp, expError);
 
         String senError = checkSeniority(dev.getSeniority(), t, username, ticketId);
-        if (senError != null) {
-            return buildError(result, "assignTicket", username, timestamp, senError);
-        }
+        if (senError != null) return buildError(result, "assignTicket", username, timestamp, senError);
 
         t.setAssignedTo(username);
         t.setAssignedAt(timestamp);
+
+        TicketAction assignAction = new TicketAction();
+        assignAction.setAction("ASSIGNED");
+        assignAction.setBy(username);
+        assignAction.setTimestamp(timestamp);
+        t.addHistory(assignAction);
+
+        TicketAction statusAction = new TicketAction();
+        statusAction.setAction("STATUS_CHANGED");
+        statusAction.setBy(username);
+        statusAction.setTimestamp(timestamp);
+        statusAction.setFrom("OPEN");
+        statusAction.setTo("IN_PROGRESS");
+        t.addHistory(statusAction);
+
         t.setStatus("IN_PROGRESS");
 
         result.put("status", "success");
@@ -96,26 +108,15 @@ public class AssignTicketCommand implements ICommand {
 
     private String checkExpertise(String devExp, String ticketExp, String username, int ticketId) {
         List<String> required = new ArrayList<>();
+        if ("BACKEND".equals(ticketExp)) { required.add("BACKEND"); required.add("FULLSTACK"); }
+        else if ("FRONTEND".equals(ticketExp)) { required.add("DESIGN"); required.add("FRONTEND"); required.add("FULLSTACK"); }
+        else if ("DESIGN".equals(ticketExp)) { required.add("DESIGN"); required.add("FRONTEND"); required.add("FULLSTACK"); }
+        else if ("DEVOPS".equals(ticketExp)) { required.add("DEVOPS"); required.add("FULLSTACK"); }
+        else if ("DB".equals(ticketExp)) { required.add("BACKEND"); required.add("DB"); required.add("FULLSTACK"); }
 
-        if ("BACKEND".equals(ticketExp)) {
-            required.add("BACKEND"); required.add("FULLSTACK");
-        } else if ("FRONTEND".equals(ticketExp)) {
-            required.add("DESIGN"); required.add("FRONTEND"); required.add("FULLSTACK");
-        } else if ("DESIGN".equals(ticketExp)) {
-            required.add("DESIGN"); required.add("FRONTEND"); required.add("FULLSTACK");
-        } else if ("DEVOPS".equals(ticketExp)) {
-            required.add("DEVOPS"); required.add("FULLSTACK");
-        } else if ("DB".equals(ticketExp)) {
-            required.add("BACKEND"); required.add("DB"); required.add("FULLSTACK");
-        }
-
-        if (required.contains(devExp)) {
-            return null;
-        }
-
+        if (required.contains(devExp)) return null;
         required.sort(String::compareTo);
-        String reqStr = String.join(", ", required);
-        return "Developer " + username + " cannot assign ticket " + ticketId + " due to expertise area. Required: " + reqStr + "; Current: " + devExp + ".";
+        return "Developer " + username + " cannot assign ticket " + ticketId + " due to expertise area. Required: " + String.join(", ", required) + "; Current: " + devExp + ".";
     }
 
     private String checkSeniority(Seniority seniority, Ticket t, String username, int ticketId) {
@@ -137,12 +138,9 @@ public class AssignTicketCommand implements ICommand {
         if (canMid) required.add("MID");
         if (canSenior) required.add("SENIOR");
 
-        if (required.contains(seniority.name())) {
-            return null;
-        }
+        if (required.contains(seniority.name())) return null;
 
-        String reqStr = String.join(", ", required);
-        return "Developer " + username + " cannot assign ticket " + ticketId + " due to seniority level. Required: " + reqStr + "; Current: " + seniority.name() + ".";
+        return "Developer " + username + " cannot assign ticket " + ticketId + " due to seniority level. Required: " + String.join(", ", required) + "; Current: " + seniority.name() + ".";
     }
 
     private ObjectNode buildError(ObjectNode result, String command, String username, String timestamp, String msg) {

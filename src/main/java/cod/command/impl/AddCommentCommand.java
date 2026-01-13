@@ -28,14 +28,10 @@ public class AddCommentCommand implements ICommand {
         String timestamp = args.has("timestamp") ? args.get("timestamp").asText() : "";
 
         User user = db.getUser(username);
-        if (user == null) {
-            return null;
-        }
+        if (user == null) return null;
 
         Ticket t = db.getTicket(ticketId);
-        if (t == null) {
-            return null;
-        }
+        if (t == null) return null;
 
         if (t.getReportedBy().isEmpty()) {
             return buildError(result, "addComment", username, timestamp, "Comments are not allowed on anonymous tickets.");
@@ -46,12 +42,17 @@ public class AddCommentCommand implements ICommand {
         }
 
         String role = user.getRole();
+
         if ("DEVELOPER".equals(role)) {
             if (!username.equals(t.getAssignedTo())) {
                 return buildError(result, "addComment", username, timestamp,
                         "Ticket " + ticketId + " is not assigned to the developer " + username + ".");
             }
         } else if ("REPORTER".equals(role)) {
+            if ("CLOSED".equals(t.getStatus())) {
+                return buildError(result, "addComment", username, timestamp, "Reporters cannot comment on CLOSED tickets.");
+            }
+
             if (!username.equals(t.getReportedBy())) {
                 return buildError(result, "addComment", username, timestamp,
                         "Reporter " + username + " cannot comment on ticket " + ticketId + ".");

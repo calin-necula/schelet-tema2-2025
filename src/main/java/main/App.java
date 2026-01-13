@@ -56,8 +56,9 @@ public class App {
                             boolean isError = result.has("error") ||
                                     (result.has("status") && "error".equals(result.get("status").asText()));
                             boolean isViewCommand = commandName.startsWith("view");
+                            boolean isSearchCommand = "search".equals(commandName);
 
-                            if (isError || isViewCommand) {
+                            if (isError || isViewCommand || isSearchCommand) {
                                 outputs.add(result);
                             }
                         }
@@ -71,7 +72,9 @@ public class App {
 
         try {
             File outputFile = new File(outputPath);
-            outputFile.getParentFile().mkdirs();
+            if (outputFile.getParentFile() != null) {
+                outputFile.getParentFile().mkdirs();
+            }
             WRITER.withDefaultPrettyPrinter().writeValue(outputFile, outputs);
         } catch (IOException e) {
             System.out.println("error writing to output file: " + e.getMessage());
