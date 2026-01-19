@@ -15,7 +15,7 @@ public final class DateUtils {
     }
 
     /**
-     * Calculates the number of days between two dates (inclusive).
+     Calculates the number of days between two dates (inclusive).
      */
     public static int daysBetween(final String start, final String end) {
         LocalDate d1 = LocalDate.parse(start);
@@ -24,7 +24,7 @@ public final class DateUtils {
     }
 
     /**
-     * Parses a date string into a LocalDate.
+     Parses a date string into a LocalDate.
      */
     public static LocalDate parse(final String date) {
         return LocalDate.parse(date);

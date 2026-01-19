@@ -25,7 +25,7 @@ public final class App {
             new ObjectMapper().writer().withDefaultPrettyPrinter();
 
     /**
-     * Runs the application processing logic.
+     Runs the application processing logic.
      */
     public static void run(final String inputPath, final String outputPath) {
         List<ObjectNode> outputs = new ArrayList<>();
@@ -94,7 +94,7 @@ public final class App {
     }
 
     /**
-     * Main entry point of the application.
+     Main entry point of the application.
      */
     public static void main(final String[] args) {
         if (args.length < 2) {
