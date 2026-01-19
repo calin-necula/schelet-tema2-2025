@@ -8,6 +8,7 @@ import cod.database.Database;
 import cod.model.Milestone;
 import cod.model.Ticket;
 import cod.model.TicketAction;
+import cod.utils.NotificationManager;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -29,6 +30,9 @@ public class CreateMilestoneCommand implements ICommand {
 
         String username = args.has("username") ? args.get("username").asText() : "";
         String timestampStr = args.has("timestamp") ? args.get("timestamp").asText() : "";
+
+        NotificationManager.checkDeadlines(db, timestampStr);
+        NotificationManager.checkUnblocking(db, timestampStr);
 
         if (db.isTestingPhase() && db.getTestingPhaseStartDate() != null && !timestampStr.isEmpty()) {
             try {
@@ -99,6 +103,10 @@ public class CreateMilestoneCommand implements ICommand {
         }
 
         db.addMilestone(m);
+
+        String msg = "New milestone " + m.getName() + " has been created with due date " + m.getDueDate() + ".";
+        NotificationManager.notifyUsers(m.getAssignedDevs(), msg);
+
         result.put("status", "success");
         return result;
     }

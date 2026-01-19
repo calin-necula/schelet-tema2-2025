@@ -28,9 +28,12 @@ public class Milestone {
     @JsonIgnore public int daysUntilDueVal = 0;
     @JsonIgnore public int overdueByVal = 0;
 
+    // --- Flag-uri Notificări ---
+    @JsonIgnore private boolean notifiedDueTomorrow = false;
+    @JsonIgnore private boolean unblockedNotified = false;
+
     public Milestone() {}
 
-    // ... (Getters standard) ...
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public List<String> getBlockingFor() { return blockingFor; }
@@ -48,6 +51,10 @@ public class Milestone {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    public boolean isNotifiedDueTomorrow() { return notifiedDueTomorrow; }
+    public void setNotifiedDueTomorrow(boolean notifiedDueTomorrow) { this.notifiedDueTomorrow = notifiedDueTomorrow; }
+    public boolean isUnblockedNotified() { return unblockedNotified; }
+    public void setUnblockedNotified(boolean unblockedNotified) { this.unblockedNotified = unblockedNotified; }
 
     public boolean getIsBlocked() {
         Database db = Database.getInstance();
@@ -58,6 +65,17 @@ public class Milestone {
                         .anyMatch(t -> t != null && !"CLOSED".equals(t.getStatus()));
 
                 if (isBlockingActive) return true;
+            }
+        }
+        return false;
+    }
+
+    @JsonIgnore
+    public boolean hasDependencies() {
+        Database db = Database.getInstance();
+        for (Milestone other : db.getMilestones()) {
+            if (other.getBlockingFor().contains(this.name)) {
+                return true;
             }
         }
         return false;

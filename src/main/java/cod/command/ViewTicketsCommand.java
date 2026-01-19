@@ -72,11 +72,6 @@ public class ViewTicketsCommand implements ICommand {
             }
         }
 
-        visibleTickets.sort((t1, t2) -> {
-            int dateComp = t1.getCreatedAt().compareTo(t2.getCreatedAt());
-            if (dateComp != 0) return dateComp;
-            return Integer.compare(t1.getId(), t2.getId());
-        });
 
         for (Ticket t : visibleTickets) {
             ticketsArray.add(mapper.valueToTree(t));

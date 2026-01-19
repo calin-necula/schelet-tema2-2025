@@ -9,7 +9,7 @@ import cod.model.Milestone;
 import cod.model.Ticket;
 import cod.model.TicketAction;
 import cod.model.User;
-
+import cod.utils.NotificationManager;
 
 public class ChangeStatusTicketCommand implements ICommand {
     private final JsonNode args;
@@ -27,6 +27,8 @@ public class ChangeStatusTicketCommand implements ICommand {
         String username = args.has("username") ? args.get("username").asText() : "";
         String timestamp = args.has("timestamp") ? args.get("timestamp").asText() : "";
         int ticketId = args.has("ticketID") ? args.get("ticketID").asInt() : -1;
+
+        NotificationManager.checkDeadlines(db, timestamp);
 
         User user = db.getUser(username);
         Ticket t = db.getTicket(ticketId);
@@ -69,6 +71,7 @@ public class ChangeStatusTicketCommand implements ICommand {
                 }
 
                 updateMilestoneStatus(db, ticketId);
+                NotificationManager.checkUnblocking(db, timestamp);
             }
         }
 

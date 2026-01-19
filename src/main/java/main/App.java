@@ -41,6 +41,7 @@ public class App {
 
             if (commandsNode.isArray()) {
                 for (JsonNode commandNode : commandsNode) {
+                    if (!commandNode.has("command")) continue;
                     String commandName = commandNode.get("command").asText();
 
                     if ("lostInvestors".equals(commandName)) {
@@ -57,8 +58,14 @@ public class App {
                                     (result.has("status") && "error".equals(result.get("status").asText()));
                             boolean isViewCommand = commandName.startsWith("view");
                             boolean isSearchCommand = "search".equals(commandName);
+                            boolean isReportCommand = "generateCustomerImpactReport".equals(commandName);
+                            boolean isRiskReport = "generateTicketRiskReport".equals(commandName);
+                            boolean isEfficiencyReport = "generateResolutionEfficiencyReport".equals(commandName);
+                            boolean isStabilityReport = "appStabilityReport".equals(commandName);
+                            boolean isPerformanceReport = "generatePerformanceReport".equals(commandName);
 
-                            if (isError || isViewCommand || isSearchCommand) {
+                            if (isError || isViewCommand || isSearchCommand || isReportCommand ||
+                                    isRiskReport || isEfficiencyReport || isStabilityReport || isPerformanceReport) {
                                 outputs.add(result);
                             }
                         }
@@ -72,12 +79,15 @@ public class App {
 
         try {
             File outputFile = new File(outputPath);
-            if (outputFile.getParentFile() != null) {
-                outputFile.getParentFile().mkdirs();
-            }
+            outputFile.getParentFile().mkdirs();
             WRITER.withDefaultPrettyPrinter().writeValue(outputFile, outputs);
         } catch (IOException e) {
             System.out.println("error writing to output file: " + e.getMessage());
         }
+    }
+
+    public static void main(String[] args) {
+        if (args.length < 2) return;
+        run(args[0], args[1]);
     }
 }

@@ -20,7 +20,12 @@ public class CommandFactory {
             case "viewTicketHistory": return new ViewTicketHistoryCommand(args);
             case "undoChangeStatus": return new UndoChangeStatusTicketCommand(args);
             case "search": return new SearchCommand(args);
-
+            case "viewNotifications": return new ViewNotificationsCommand(args);
+            case "generateCustomerImpactReport": return new GenerateCustomerImpactReportCommand(args);
+            case "generateTicketRiskReport": return new GenerateTicketRiskReportCommand(args);
+            case "generateResolutionEfficiencyReport": return new GenerateResolutionEfficiencyReportCommand(args);
+            case "appStabilityReport": return new AppStabilityReportCommand(args);
+            case "generatePerformanceReport": return new GeneratePerformanceReportCommand(args);
             case "lostInvestors": return null;
             default: return null;
         }
