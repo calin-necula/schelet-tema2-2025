@@ -1,25 +1,31 @@
 package cod.command;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import cod.command.ICommand;
 import cod.database.Database;
 import cod.model.Milestone;
 import cod.model.Ticket;
 import cod.model.User;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ViewTicketsCommand implements ICommand {
+public final class ViewTicketsCommand implements ICommand {
+    private static final int DAYS_PER_BOOST = 3;
+    private static final int MAX_PRIORITY_VAL = 3;
+
+    private static final int PRIO_LOW = 0;
+    private static final int PRIO_MED = 1;
+    private static final int PRIO_HIGH = 2;
+    private static final int PRIO_CRIT = 3;
+
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public ViewTicketsCommand(JsonNode args) {
+    public ViewTicketsCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -55,11 +61,14 @@ public class ViewTicketsCommand implements ICommand {
             if ("MANAGER".equals(role)) {
                 include = true;
             } else if ("REPORTER".equals(role)) {
-                if (t.getReportedBy().equals(username)) include = true;
+                if (t.getReportedBy().equals(username)) {
+                    include = true;
+                }
             } else if ("DEVELOPER".equals(role)) {
                 if ("OPEN".equals(t.getStatus())) {
                     for (Milestone m : db.getMilestones()) {
-                        if (m.getAssignedDevs().contains(username) && m.getTickets().contains(t.getId())) {
+                        if (m.getAssignedDevs().contains(username)
+                                && m.getTickets().contains(t.getId())) {
                             include = true;
                             break;
                         }
@@ -72,7 +81,6 @@ public class ViewTicketsCommand implements ICommand {
             }
         }
 
-
         for (Ticket t : visibleTickets) {
             ticketsArray.add(mapper.valueToTree(t));
         }
@@ -80,56 +88,85 @@ public class ViewTicketsCommand implements ICommand {
         return result;
     }
 
-    private void updatePriorities(Database db, String currentTimestampStr) {
-        if (currentTimestampStr == null || currentTimestampStr.isEmpty()) return;
+    private void updatePriorities(final Database db, final String currentTimestampStr) {
+        if (currentTimestampStr == null || currentTimestampStr.isEmpty()) {
+            return;
+        }
         LocalDate current = LocalDate.parse(currentTimestampStr);
 
         for (Milestone m : db.getMilestones()) {
-            if (m.getIsBlocked()) continue;
+            if (m.getIsBlocked()) {
+                continue;
+            }
 
             LocalDate created = LocalDate.parse(m.getCreatedAt());
             LocalDate due = LocalDate.parse(m.getDueDate());
 
             long daysActive = ChronoUnit.DAYS.between(created, current) + 1;
-            int boost = (int) (daysActive / 3);
+            int boost = (int) (daysActive / DAYS_PER_BOOST);
 
             boolean criticalMode = false;
             long daysToDue = ChronoUnit.DAYS.between(current, due);
 
-            if (daysToDue == 1 || daysToDue < 0) criticalMode = true;
+            if (daysToDue == 1 || daysToDue < 0) {
+                criticalMode = true;
+            }
 
             for (Integer tId : m.getTickets()) {
                 Ticket t = db.getTicket(tId);
-                if (t == null) continue;
-                if ("CLOSED".equals(t.getStatus())) continue;
+                if (t == null) {
+                    continue;
+                }
+                if ("CLOSED".equals(t.getStatus())) {
+                    continue;
+                }
 
                 String initial = t.getInitialBusinessPriority();
-                if (initial == null) initial = t.getBusinessPriority();
+                if (initial == null) {
+                    initial = t.getBusinessPriority();
+                }
 
                 int prioVal = getPriorityValue(initial);
                 prioVal += boost;
-                if (prioVal > 3) prioVal = 3;
+                if (prioVal > MAX_PRIORITY_VAL) {
+                    prioVal = MAX_PRIORITY_VAL;
+                }
 
-                if (criticalMode) prioVal = 3;
-
+                if (criticalMode) {
+                    prioVal = MAX_PRIORITY_VAL;
+                }
 
                 t.setComputedPriority(getPriorityString(prioVal));
             }
         }
     }
 
-    private int getPriorityValue(String p) {
-        if ("LOW".equals(p)) return 0;
-        if ("MEDIUM".equals(p)) return 1;
-        if ("HIGH".equals(p)) return 2;
-        if ("CRITICAL".equals(p)) return 3;
+    private int getPriorityValue(final String p) {
+        if ("LOW".equals(p)) {
+            return PRIO_LOW;
+        }
+        if ("MEDIUM".equals(p)) {
+            return PRIO_MED;
+        }
+        if ("HIGH".equals(p)) {
+            return PRIO_HIGH;
+        }
+        if ("CRITICAL".equals(p)) {
+            return PRIO_CRIT;
+        }
         return 0;
     }
 
-    private String getPriorityString(int v) {
-        if (v <= 0) return "LOW";
-        if (v == 1) return "MEDIUM";
-        if (v == 2) return "HIGH";
+    private String getPriorityString(final int v) {
+        if (v <= PRIO_LOW) {
+            return "LOW";
+        }
+        if (v == PRIO_MED) {
+            return "MEDIUM";
+        }
+        if (v == PRIO_HIGH) {
+            return "HIGH";
+        }
         return "CRITICAL";
     }
 }

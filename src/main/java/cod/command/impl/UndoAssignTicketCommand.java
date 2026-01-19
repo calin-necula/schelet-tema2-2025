@@ -9,11 +9,11 @@ import cod.model.Ticket;
 import cod.model.TicketAction;
 import cod.model.User;
 
-public class UndoAssignTicketCommand implements ICommand {
+public final class UndoAssignTicketCommand implements ICommand {
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public UndoAssignTicketCommand(JsonNode args) {
+    public UndoAssignTicketCommand(final JsonNode args) {
         this.args = args;
     }
 

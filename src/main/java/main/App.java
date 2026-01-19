@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class App {
+public final class App {
     private App() {
     }
 
@@ -24,6 +24,9 @@ public class App {
     private static final ObjectWriter WRITER =
             new ObjectMapper().writer().withDefaultPrettyPrinter();
 
+    /**
+     * Runs the application processing logic.
+     */
     public static void run(final String inputPath, final String outputPath) {
         List<ObjectNode> outputs = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
@@ -33,7 +36,8 @@ public class App {
 
             File usersFile = new File(INPUT_USERS_FIELD);
             if (usersFile.exists()) {
-                List<User> users = mapper.readValue(usersFile, new TypeReference<List<User>>() {});
+                List<User> users = mapper.readValue(usersFile,
+                        new TypeReference<List<User>>() { });
                 Database.getInstance().setUsers(users);
             }
 
@@ -41,7 +45,9 @@ public class App {
 
             if (commandsNode.isArray()) {
                 for (JsonNode commandNode : commandsNode) {
-                    if (!commandNode.has("command")) continue;
+                    if (!commandNode.has("command")) {
+                        continue;
+                    }
                     String commandName = commandNode.get("command").asText();
 
                     if ("lostInvestors".equals(commandName)) {
@@ -54,18 +60,19 @@ public class App {
                         ObjectNode result = command.execute();
 
                         if (result != null) {
-                            boolean isError = result.has("error") ||
-                                    (result.has("status") && "error".equals(result.get("status").asText()));
-                            boolean isViewCommand = commandName.startsWith("view");
-                            boolean isSearchCommand = "search".equals(commandName);
-                            boolean isReportCommand = "generateCustomerImpactReport".equals(commandName);
-                            boolean isRiskReport = "generateTicketRiskReport".equals(commandName);
-                            boolean isEfficiencyReport = "generateResolutionEfficiencyReport".equals(commandName);
-                            boolean isStabilityReport = "appStabilityReport".equals(commandName);
-                            boolean isPerformanceReport = "generatePerformanceReport".equals(commandName);
+                            boolean isError = result.has("error")
+                                    || (result.has("status")
+                                    && "error".equals(result.get("status").asText()));
+                            boolean isView = commandName.startsWith("view");
+                            boolean isSearch = "search".equals(commandName);
+                            boolean isImpact = "generateCustomerImpactReport".equals(commandName);
+                            boolean isRisk = "generateTicketRiskReport".equals(commandName);
+                            boolean isEff = "generateResolutionEfficiencyReport".equals(commandName);
+                            boolean isStability = "appStabilityReport".equals(commandName);
+                            boolean isPerf = "generatePerformanceReport".equals(commandName);
 
-                            if (isError || isViewCommand || isSearchCommand || isReportCommand ||
-                                    isRiskReport || isEfficiencyReport || isStabilityReport || isPerformanceReport) {
+                            if (isError || isView || isSearch || isImpact
+                                    || isRisk || isEff || isStability || isPerf) {
                                 outputs.add(result);
                             }
                         }
@@ -86,8 +93,13 @@ public class App {
         }
     }
 
-    public static void main(String[] args) {
-        if (args.length < 2) return;
+    /**
+     * Main entry point of the application.
+     */
+    public static void main(final String[] args) {
+        if (args.length < 2) {
+            return;
+        }
         run(args[0], args[1]);
     }
 }

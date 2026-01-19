@@ -12,11 +12,11 @@ import cod.model.User;
 
 import java.util.List;
 
-public class UndoChangeStatusTicketCommand implements ICommand {
+public final class UndoChangeStatusTicketCommand implements ICommand {
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public UndoChangeStatusTicketCommand(JsonNode args) {
+    public UndoChangeStatusTicketCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -37,7 +37,8 @@ public class UndoChangeStatusTicketCommand implements ICommand {
                 result.put("command", "undoChangeStatus");
                 result.put("username", username);
                 result.put("timestamp", timestamp);
-                result.put("error", "Ticket " + ticketId + " is not assigned to developer " + username + ".");
+                result.put("error", "Ticket " + ticketId
+                        + " is not assigned to developer " + username + ".");
                 return result;
             }
 
@@ -77,7 +78,7 @@ public class UndoChangeStatusTicketCommand implements ICommand {
         return result;
     }
 
-    private void updateMilestoneStatus(Database db, int ticketId) {
+    private void updateMilestoneStatus(final Database db, final int ticketId) {
         for (Milestone m : db.getMilestones()) {
             if (m.getTickets().contains(ticketId)) {
                 boolean allClosed = true;

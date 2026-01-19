@@ -18,11 +18,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class SearchCommand implements ICommand {
+public final class SearchCommand implements ICommand {
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public SearchCommand(JsonNode args) {
+    public SearchCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -58,20 +58,27 @@ public class SearchCommand implements ICommand {
         return result;
     }
 
-    private void searchDevelopers(Database db, JsonNode filters, ArrayNode resultsArray) {
+    private void searchDevelopers(final Database db, final JsonNode filters,
+                                  final ArrayNode resultsArray) {
         List<Developer> matchedDevs = new ArrayList<>();
 
         for (User user : db.getUsers()) {
-            if (!"DEVELOPER".equals(user.getRole())) continue;
+            if (!"DEVELOPER".equals(user.getRole())) {
+                continue;
+            }
 
             Developer dev = (Developer) user;
             boolean match = true;
 
             if (filters != null) {
-                if (filters.has("expertiseArea") && !filters.get("expertiseArea").asText().equals(dev.getExpertiseArea())) {
+                if (filters.has("expertiseArea")
+                        && !filters.get("expertiseArea").asText()
+                        .equals(dev.getExpertiseArea())) {
                     match = false;
                 }
-                if (filters.has("seniority") && !filters.get("seniority").asText().equals(dev.getSeniority().name())) {
+                if (filters.has("seniority")
+                        && !filters.get("seniority").asText()
+                        .equals(dev.getSeniority().name())) {
                     match = false;
                 }
             }
@@ -91,29 +98,44 @@ public class SearchCommand implements ICommand {
         }
     }
 
-    private void searchTickets(Database db, String username, JsonNode filters, ArrayNode resultsArray) {
+    private void searchTickets(final Database db, final String username, final JsonNode filters,
+                               final ArrayNode resultsArray) {
         User user = db.getUser(username);
 
         for (Ticket t : db.getTickets()) {
-            if (!"OPEN".equals(t.getStatus())) continue;
+            if (!"OPEN".equals(t.getStatus())) {
+                continue;
+            }
 
             boolean match = true;
             List<String> matchedKeywords = new ArrayList<>();
 
             if (filters != null) {
-                if (filters.has("type") && !filters.get("type").asText().equals(t.getType().name())) match = false;
-                if (filters.has("businessPriority") && !filters.get("businessPriority").asText().equals(t.getBusinessPriority())) match = false;
+                if (filters.has("type")
+                        && !filters.get("type").asText().equals(t.getType().name())) {
+                    match = false;
+                }
+                if (filters.has("businessPriority")
+                        && !filters.get("businessPriority").asText()
+                        .equals(t.getBusinessPriority())) {
+                    match = false;
+                }
 
                 if (filters.has("createdAfter")) {
                     LocalDate created = LocalDate.parse(t.getCreatedAt());
                     LocalDate after = LocalDate.parse(filters.get("createdAfter").asText());
-                    if (!created.isAfter(after)) match = false;
+                    if (!created.isAfter(after)) {
+                        match = false;
+                    }
                 }
 
-                if (filters.has("availableForAssignment") && filters.get("availableForAssignment").asBoolean()) {
+                if (filters.has("availableForAssignment")
+                        && filters.get("availableForAssignment").asBoolean()) {
                     if (user != null && "DEVELOPER".equals(user.getRole())) {
                         Developer dev = (Developer) user;
-                        if (!isAvailableForAssignment(db, dev, t)) match = false;
+                        if (!isAvailableForAssignment(db, dev, t)) {
+                            match = false;
+                        }
                     } else {
                         match = false;
                     }
@@ -121,7 +143,8 @@ public class SearchCommand implements ICommand {
 
                 if (filters.has("keywords")) {
                     boolean keywordMatch = false;
-                    String content = (t.getTitle() + " " + (t.getDescription() != null ? t.getDescription() : "")).toLowerCase();
+                    String content = (t.getTitle() + " "
+                            + (t.getDescription() != null ? t.getDescription() : "")).toLowerCase();
                     for (JsonNode kwNode : filters.get("keywords")) {
                         String kw = kwNode.asText();
                         if (content.contains(kw.toLowerCase())) {
@@ -129,7 +152,9 @@ public class SearchCommand implements ICommand {
                             matchedKeywords.add(kw);
                         }
                     }
-                    if (!keywordMatch) match = false;
+                    if (!keywordMatch) {
+                        match = false;
+                    }
                 }
             }
 
@@ -141,7 +166,9 @@ public class SearchCommand implements ICommand {
 
                 if (!matchedKeywords.isEmpty()) {
                     ArrayNode kwArray = tNode.putArray("matchingWords");
-                    for (String kw : matchedKeywords) kwArray.add(kw);
+                    for (String kw : matchedKeywords) {
+                        kwArray.add(kw);
+                    }
                 }
 
                 resultsArray.add(tNode);
@@ -149,26 +176,38 @@ public class SearchCommand implements ICommand {
         }
     }
 
-    private boolean isAvailableForAssignment(Database db, Developer dev, Ticket t) {
-        if (t.getAssignedTo() != null && !t.getAssignedTo().isEmpty()) return false;
+    private boolean isAvailableForAssignment(final Database db, final Developer dev,
+                                             final Ticket t) {
+        if (t.getAssignedTo() != null && !t.getAssignedTo().isEmpty()) {
+            return false;
+        }
 
         boolean inUserMilestone = false;
         for (Milestone m : db.getMilestones()) {
-            if (m.getTickets().contains(t.getId()) && m.getAssignedDevs().contains(dev.getUsername())) {
+            if (m.getTickets().contains(t.getId())
+                    && m.getAssignedDevs().contains(dev.getUsername())) {
                 inUserMilestone = true;
                 break;
             }
         }
-        if (!inUserMilestone) return false;
+        if (!inUserMilestone) {
+            return false;
+        }
 
-        if (!checkExpertise(dev.getExpertiseArea(), t.getExpertiseArea())) return false;
-        if (!checkSeniority(dev.getSeniority(), t)) return false;
+        if (!checkExpertise(dev.getExpertiseArea(), t.getExpertiseArea())) {
+            return false;
+        }
+        if (!checkSeniority(dev.getSeniority(), t)) {
+            return false;
+        }
 
         return true;
     }
 
-    private boolean checkExpertise(String devExp, String ticketExp) {
-        if ("FULLSTACK".equals(devExp)) return true;
+    private boolean checkExpertise(final String devExp, final String ticketExp) {
+        if ("FULLSTACK".equals(devExp)) {
+            return true;
+        }
 
         if ("FRONTEND".equals(ticketExp) || "DESIGN".equals(ticketExp)) {
             return "FRONTEND".equals(devExp) || "DESIGN".equals(devExp);
@@ -183,19 +222,29 @@ public class SearchCommand implements ICommand {
         return devExp.equals(ticketExp);
     }
 
-    private boolean checkSeniority(Seniority seniority, Ticket t) {
+    private boolean checkSeniority(final Seniority seniority, final Ticket t) {
         String priority = t.getBusinessPriority();
         TicketType type = t.getType();
 
         boolean canJunior = true;
-        if ("HIGH".equals(priority) || "CRITICAL".equals(priority)) canJunior = false;
-        if (type == TicketType.FEATURE_REQUEST) canJunior = false;
+        if ("HIGH".equals(priority) || "CRITICAL".equals(priority)) {
+            canJunior = false;
+        }
+        if (type == TicketType.FEATURE_REQUEST) {
+            canJunior = false;
+        }
 
         boolean canMid = true;
-        if ("CRITICAL".equals(priority)) canMid = false;
+        if ("CRITICAL".equals(priority)) {
+            canMid = false;
+        }
 
-        if (seniority == Seniority.JUNIOR && !canJunior) return false;
-        if (seniority == Seniority.MID && !canMid) return false;
+        if (seniority == Seniority.JUNIOR && !canJunior) {
+            return false;
+        }
+        if (seniority == Seniority.MID && !canMid) {
+            return false;
+        }
 
         return true;
     }

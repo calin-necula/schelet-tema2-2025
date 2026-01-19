@@ -9,11 +9,12 @@ import cod.model.Comment;
 import cod.model.Ticket;
 import cod.model.User;
 
-public class AddCommentCommand implements ICommand {
+public final class AddCommentCommand implements ICommand {
+    private static final int MIN_COMMENT_LENGTH = 10;
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public AddCommentCommand(JsonNode args) {
+    public AddCommentCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -28,17 +29,23 @@ public class AddCommentCommand implements ICommand {
         String timestamp = args.has("timestamp") ? args.get("timestamp").asText() : "";
 
         User user = db.getUser(username);
-        if (user == null) return null;
-
-        Ticket t = db.getTicket(ticketId);
-        if (t == null) return null;
-
-        if (t.getReportedBy().isEmpty()) {
-            return buildError(result, "addComment", username, timestamp, "Comments are not allowed on anonymous tickets.");
+        if (user == null) {
+            return null;
         }
 
-        if (commentText == null || commentText.length() < 10) {
-            return buildError(result, "addComment", username, timestamp, "Comment must be at least 10 characters long.");
+        Ticket t = db.getTicket(ticketId);
+        if (t == null) {
+            return null;
+        }
+
+        if (t.getReportedBy().isEmpty()) {
+            return buildError(result, "addComment", username, timestamp,
+                    "Comments are not allowed on anonymous tickets.");
+        }
+
+        if (commentText == null || commentText.length() < MIN_COMMENT_LENGTH) {
+            return buildError(result, "addComment", username, timestamp,
+                    "Comment must be at least 10 characters long.");
         }
 
         String role = user.getRole();
@@ -46,16 +53,19 @@ public class AddCommentCommand implements ICommand {
         if ("DEVELOPER".equals(role)) {
             if (!username.equals(t.getAssignedTo())) {
                 return buildError(result, "addComment", username, timestamp,
-                        "Ticket " + ticketId + " is not assigned to the developer " + username + ".");
+                        "Ticket " + ticketId + " is not assigned to the developer "
+                                + username + ".");
             }
         } else if ("REPORTER".equals(role)) {
             if ("CLOSED".equals(t.getStatus())) {
-                return buildError(result, "addComment", username, timestamp, "Reporters cannot comment on CLOSED tickets.");
+                return buildError(result, "addComment", username, timestamp,
+                        "Reporters cannot comment on CLOSED tickets.");
             }
 
             if (!username.equals(t.getReportedBy())) {
                 return buildError(result, "addComment", username, timestamp,
-                        "Reporter " + username + " cannot comment on ticket " + ticketId + ".");
+                        "Reporter " + username + " cannot comment on ticket "
+                                + ticketId + ".");
             }
         }
 
@@ -66,7 +76,9 @@ public class AddCommentCommand implements ICommand {
         return result;
     }
 
-    private ObjectNode buildError(ObjectNode result, String command, String username, String timestamp, String msg) {
+    private ObjectNode buildError(final ObjectNode result, final String command,
+                                  final String username, final String timestamp,
+                                  final String msg) {
         result.put("command", command);
         result.put("username", username);
         result.put("timestamp", timestamp);

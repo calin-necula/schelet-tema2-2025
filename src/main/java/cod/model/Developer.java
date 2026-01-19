@@ -1,24 +1,44 @@
 package cod.model;
 
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import cod.model.enums.Seniority;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({ "username", "expertiseArea", "seniority", "performanceScore", "hireDate" })
-public class Developer extends User {
+public final class Developer extends User {
     private String hireDate;
     private String expertiseArea;
     private Seniority seniority;
     private double performanceScore = 0.0;
 
-    public String getHireDate() { return hireDate; }
-    public void setHireDate(String hireDate) { this.hireDate = hireDate; }
+    public String getHireDate() {
+        return hireDate;
+    }
 
-    public String getExpertiseArea() { return expertiseArea; }
-    public void setExpertiseArea(String expertiseArea) { this.expertiseArea = expertiseArea; }
+    public void setHireDate(final String hireDate) {
+        this.hireDate = hireDate;
+    }
 
-    public Seniority getSeniority() { return seniority; }
-    public void setSeniority(Seniority seniority) { this.seniority = seniority; }
+    public String getExpertiseArea() {
+        return expertiseArea;
+    }
 
-    public double getPerformanceScore() { return performanceScore; }
-    public void setPerformanceScore(double performanceScore) { this.performanceScore = performanceScore; }
+    public void setExpertiseArea(final String expertiseArea) {
+        this.expertiseArea = expertiseArea;
+    }
+
+    public Seniority getSeniority() {
+        return seniority;
+    }
+
+    public void setSeniority(final Seniority seniority) {
+        this.seniority = seniority;
+    }
+
+    public double getPerformanceScore() {
+        return performanceScore;
+    }
+
+    public void setPerformanceScore(final double performanceScore) {
+        this.performanceScore = performanceScore;
+    }
 }

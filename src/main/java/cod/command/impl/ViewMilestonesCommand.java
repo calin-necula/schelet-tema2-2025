@@ -13,11 +13,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class ViewMilestonesCommand implements ICommand {
+public final class ViewMilestonesCommand implements ICommand {
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public ViewMilestonesCommand(JsonNode args) {
+    public ViewMilestonesCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -49,9 +49,13 @@ public class ViewMilestonesCommand implements ICommand {
             String role = user.getRole();
 
             if ("MANAGER".equals(role)) {
-                if (m.getCreatedBy().equals(username)) show = true;
+                if (m.getCreatedBy().equals(username)) {
+                    show = true;
+                }
             } else if ("DEVELOPER".equals(role)) {
-                if (m.getAssignedDevs().contains(username)) show = true;
+                if (m.getAssignedDevs().contains(username)) {
+                    show = true;
+                }
             }
 
             if (show) {

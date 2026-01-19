@@ -11,11 +11,11 @@ import cod.model.TicketAction;
 import cod.model.User;
 import cod.utils.NotificationManager;
 
-public class ChangeStatusTicketCommand implements ICommand {
+public final class ChangeStatusTicketCommand implements ICommand {
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public ChangeStatusTicketCommand(JsonNode args) {
+    public ChangeStatusTicketCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -38,7 +38,8 @@ public class ChangeStatusTicketCommand implements ICommand {
                 result.put("command", "changeStatus");
                 result.put("username", username);
                 result.put("timestamp", timestamp);
-                result.put("error", "Ticket " + ticketId + " is not assigned to developer " + username + ".");
+                result.put("error", "Ticket " + ticketId + " is not assigned to developer "
+                        + username + ".");
                 return result;
             }
 
@@ -79,7 +80,7 @@ public class ChangeStatusTicketCommand implements ICommand {
         return result;
     }
 
-    private void updateMilestoneStatus(Database db, int ticketId) {
+    private void updateMilestoneStatus(final Database db, final int ticketId) {
         for (Milestone m : db.getMilestones()) {
             if (m.getTickets().contains(ticketId)) {
                 boolean allClosed = true;

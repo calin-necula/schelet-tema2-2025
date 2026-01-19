@@ -11,11 +11,11 @@ import cod.model.User;
 
 import java.util.List;
 
-public class UndoAddCommentCommand implements ICommand {
+public final class UndoAddCommentCommand implements ICommand {
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public UndoAddCommentCommand(JsonNode args) {
+    public UndoAddCommentCommand(final JsonNode args) {
         this.args = args;
     }
 

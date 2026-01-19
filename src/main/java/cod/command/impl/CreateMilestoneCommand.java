@@ -15,11 +15,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreateMilestoneCommand implements ICommand {
+public final class CreateMilestoneCommand implements ICommand {
+    private static final int TESTING_PHASE_MAX_DAYS = 12;
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public CreateMilestoneCommand(JsonNode args) {
+    public CreateMilestoneCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -34,23 +35,29 @@ public class CreateMilestoneCommand implements ICommand {
         NotificationManager.checkDeadlines(db, timestampStr);
         NotificationManager.checkUnblocking(db, timestampStr);
 
-        if (db.isTestingPhase() && db.getTestingPhaseStartDate() != null && !timestampStr.isEmpty()) {
+        if (db.isTestingPhase() && db.getTestingPhaseStartDate() != null
+                && !timestampStr.isEmpty()) {
             try {
                 LocalDate start = db.getTestingPhaseStartDate();
                 LocalDate current = LocalDate.parse(timestampStr);
                 long daysElapsed = ChronoUnit.DAYS.between(start, current) + 1;
-                if (daysElapsed > 12) {
+                if (daysElapsed > TESTING_PHASE_MAX_DAYS) {
                     db.setTestingPhase(false);
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         if (db.getUser(username) == null) {
-            return buildError(result, "createMilestone", username, timestampStr, "Output eroare user inexistent");
+            return buildError(result, "createMilestone", username, timestampStr,
+                    "Output eroare user inexistent");
         }
         if (!"MANAGER".equals(db.getUser(username).getRole())) {
             return buildError(result, "createMilestone", username, timestampStr,
-                    "The user does not have permission to execute this command: required role MANAGER; user role " + db.getUser(username).getRole() + ".");
+                    "The user does not have permission to execute this command: "
+                            + "required role MANAGER; user role "
+                            + db.getUser(username).getRole() + ".");
         }
         if (db.isTestingPhase()) {
             return buildError(result, "createMilestone", username, timestampStr,
@@ -59,14 +66,17 @@ public class CreateMilestoneCommand implements ICommand {
 
         List<Integer> newTickets = new ArrayList<>();
         if (args.has("tickets")) {
-            for (JsonNode tNode : args.get("tickets")) newTickets.add(tNode.asInt());
+            for (JsonNode tNode : args.get("tickets")) {
+                newTickets.add(tNode.asInt());
+            }
         }
 
         for (Milestone m : db.getMilestones()) {
             for (Integer tId : newTickets) {
                 if (m.getTickets().contains(tId)) {
                     return buildError(result, "createMilestone", username, timestampStr,
-                            "Tickets " + tId + " already assigned to milestone " + m.getName() + ".");
+                            "Tickets " + tId + " already assigned to milestone "
+                                    + m.getName() + ".");
                 }
             }
         }
@@ -80,13 +90,17 @@ public class CreateMilestoneCommand implements ICommand {
 
         List<String> devs = new ArrayList<>();
         if (args.has("assignedDevs")) {
-            for (JsonNode dNode : args.get("assignedDevs")) devs.add(dNode.asText());
+            for (JsonNode dNode : args.get("assignedDevs")) {
+                devs.add(dNode.asText());
+            }
         }
         m.setAssignedDevs(devs);
 
         List<String> blocking = new ArrayList<>();
         if (args.has("blockingFor")) {
-            for (JsonNode bNode : args.get("blockingFor")) blocking.add(bNode.asText());
+            for (JsonNode bNode : args.get("blockingFor")) {
+                blocking.add(bNode.asText());
+            }
         }
         m.setBlockingFor(blocking);
 
@@ -104,14 +118,17 @@ public class CreateMilestoneCommand implements ICommand {
 
         db.addMilestone(m);
 
-        String msg = "New milestone " + m.getName() + " has been created with due date " + m.getDueDate() + ".";
+        String msg = "New milestone " + m.getName() + " has been created with due date "
+                + m.getDueDate() + ".";
         NotificationManager.notifyUsers(m.getAssignedDevs(), msg);
 
         result.put("status", "success");
         return result;
     }
 
-    private ObjectNode buildError(ObjectNode result, String command, String username, String timestamp, String errorMsg) {
+    private ObjectNode buildError(final ObjectNode result, final String command,
+                                  final String username, final String timestamp,
+                                  final String errorMsg) {
         result.put("command", command);
         result.put("username", username);
         result.put("timestamp", timestamp);

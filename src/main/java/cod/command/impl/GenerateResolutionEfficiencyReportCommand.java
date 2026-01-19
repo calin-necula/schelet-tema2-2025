@@ -7,7 +7,6 @@ import cod.command.ICommand;
 import cod.database.Database;
 import cod.model.Ticket;
 import cod.model.TicketAction;
-import cod.model.enums.TicketType;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -16,11 +15,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GenerateResolutionEfficiencyReportCommand implements ICommand {
+public final class GenerateResolutionEfficiencyReportCommand implements ICommand {
+    private static final double SCALE_100 = 100.0;
+    private static final int DAYS_SUBTRACTOR = 10;
+    private static final int DEFAULT_USABILITY = 10;
+    private static final double FEATURE_ADDON = 0.2;
+    private static final double UI_ADDON = 0.25;
+
+    private static final int WEIGHT_LOW = 1;
+    private static final int WEIGHT_MED = 2;
+    private static final int WEIGHT_HIGH = 3;
+    private static final int WEIGHT_CRIT = 4;
+
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public GenerateResolutionEfficiencyReportCommand(JsonNode args) {
+    public GenerateResolutionEfficiencyReportCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -68,7 +78,8 @@ public class GenerateResolutionEfficiencyReportCommand implements ICommand {
 
             String priority = t.getBusinessPriority();
             if (priority != null) {
-                ticketsByPriority.put(priority, ticketsByPriority.getOrDefault(priority, 0) + 1);
+                ticketsByPriority.put(priority,
+                        ticketsByPriority.getOrDefault(priority, 0) + 1);
             }
 
             double efficiency = calculateEfficiency(t);
@@ -92,15 +103,17 @@ public class GenerateResolutionEfficiencyReportCommand implements ICommand {
             if (!values.isEmpty()) {
                 avg = values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
             }
-            avg = Math.round(avg * 100.0) / 100.0;
+            avg = Math.round(avg * SCALE_100) / SCALE_100;
             efficiencyNode.put(type, avg);
         }
 
         return result;
     }
 
-    private double calculateEfficiency(Ticket t) {
-        if (t.getCreatedAt() == null || t.getCreatedAt().isEmpty()) return -1;
+    private double calculateEfficiency(final Ticket t) {
+        if (t.getCreatedAt() == null || t.getCreatedAt().isEmpty()) {
+            return -1;
+        }
         String lastActionDate = t.getCreatedAt();
         if (t.getHistory() != null && !t.getHistory().isEmpty()) {
             TicketAction last = t.getHistory().get(t.getHistory().size() - 1);
@@ -116,37 +129,37 @@ public class GenerateResolutionEfficiencyReportCommand implements ICommand {
             return -1;
         }
 
-        double denominator = Math.max(1, daysOpen - 10);
+        double denominator = Math.max(1, daysOpen - DAYS_SUBTRACTOR);
 
         double score = getMagicScore(t);
 
-        return (score / denominator) * 100.0;
+        return (score / denominator) * SCALE_100;
     }
 
-    private double getMagicScore(Ticket t) {
+    private double getMagicScore(final Ticket t) {
         switch (t.getType()) {
             case BUG:
-                // Severity + 1
                 return getWeight(t.getSeverity()) + 1.0;
             case FEATURE_REQUEST:
-                // CustomerDemand + 0.2
-                return getWeight(t.getCustomerDemand()) + 0.2;
+                return getWeight(t.getCustomerDemand()) + FEATURE_ADDON;
             case UI_FEEDBACK:
-                // (10 - Usability) - 0.25
-                int usability = t.getUsabilityScore() != null ? t.getUsabilityScore() : 10;
-                return (10 - usability) - 0.25;
+                int usability = t.getUsabilityScore() != null
+                        ? t.getUsabilityScore() : DEFAULT_USABILITY;
+                return (DEFAULT_USABILITY - usability) - UI_ADDON;
             default:
                 return 0.0;
         }
     }
 
-    private int getWeight(String val) {
-        if (val == null) return 0;
+    private int getWeight(final String val) {
+        if (val == null) {
+            return 0;
+        }
         switch (val.toUpperCase()) {
-            case "LOW": case "RARE": case "S": return 1;
-            case "MEDIUM": case "OCCASIONAL": case "M": case "MODERATE": return 2;
-            case "HIGH": case "FREQUENT": case "L": case "SEVERE": return 3;
-            case "CRITICAL": case "ALWAYS": case "XL": return 4;
+            case "LOW": case "RARE": case "S": return WEIGHT_LOW;
+            case "MEDIUM": case "OCCASIONAL": case "M": case "MODERATE": return WEIGHT_MED;
+            case "HIGH": case "FREQUENT": case "L": case "SEVERE": return WEIGHT_HIGH;
+            case "CRITICAL": case "ALWAYS": case "XL": return WEIGHT_CRIT;
             default: return 0;
         }
     }

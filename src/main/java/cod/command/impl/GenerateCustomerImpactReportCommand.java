@@ -1,23 +1,48 @@
 package cod.command.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import cod.command.ICommand;
 import cod.database.Database;
 import cod.model.Ticket;
-import cod.model.enums.TicketType;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class GenerateCustomerImpactReportCommand implements ICommand {
+public final class GenerateCustomerImpactReportCommand implements ICommand {
+    private static final double AGE_FACTOR = 0.1;
+
+    private static final double PRIO_LOW = 1.0;
+    private static final double PRIO_MED = 1.5;
+    private static final double PRIO_HIGH = 2.25;
+    private static final double PRIO_CRIT = 3.37;
+
+    private static final double SEV_LOW = 1.0;
+    private static final double SEV_MOD = 2.0;
+    private static final double SEV_SEV = 4.0;
+    private static final double SEV_CRIT = 8.0;
+
+    private static final double FREQ_RARE = 1.0;
+    private static final double FREQ_OCC = 2.0;
+    private static final double FREQ_FREQ = 3.0;
+    private static final double FREQ_ALWAYS = 4.0;
+
+    private static final double VAL_S = 1.0;
+    private static final double VAL_M = 2.0;
+    private static final double VAL_L = 3.0;
+    private static final double VAL_XL = 4.0;
+
+    private static final double DEM_LOW = 1.0;
+    private static final double DEM_MED = 2.0;
+    private static final double DEM_HIGH = 3.0;
+    private static final double DEM_CRIT = 4.0;
+
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public GenerateCustomerImpactReportCommand(JsonNode args) {
+    public GenerateCustomerImpactReportCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -62,11 +87,13 @@ public class GenerateCustomerImpactReportCommand implements ICommand {
 
             String priority = t.getBusinessPriority();
             if (priority != null) {
-                ticketsByPriority.put(priority, ticketsByPriority.getOrDefault(priority, 0) + 1);
+                ticketsByPriority.put(priority,
+                        ticketsByPriority.getOrDefault(priority, 0) + 1);
             }
 
             double impact = calculateImpact(t, timestamp);
-            customerImpactByType.put(type, customerImpactByType.getOrDefault(type, 0.0) + impact);
+            customerImpactByType.put(type,
+                    customerImpactByType.getOrDefault(type, 0.0) + impact);
         }
 
         reportNode.put("totalTickets", totalTickets);
@@ -83,7 +110,7 @@ public class GenerateCustomerImpactReportCommand implements ICommand {
         return result;
     }
 
-    private double calculateImpact(Ticket t, String currentTimestamp) {
+    private double calculateImpact(final Ticket t, final String currentTimestamp) {
         double priorityWeight = getPriorityWeight(t.getBusinessPriority());
 
         switch (t.getType()) {
@@ -106,9 +133,9 @@ public class GenerateCustomerImpactReportCommand implements ICommand {
                     try {
                         LocalDate created = LocalDate.parse(t.getCreatedAt());
                         LocalDate current = LocalDate.parse(currentTimestamp);
-                        long days = ChronoUnit.DAYS.between(created, current) + 1; // Zile inclusive
+                        long days = ChronoUnit.DAYS.between(created, current) + 1;
                         if (days > 0) {
-                            ageScore = days * 0.1;
+                            ageScore = days * AGE_FACTOR;
                         }
                     } catch (Exception e) {
                     }
@@ -122,57 +149,67 @@ public class GenerateCustomerImpactReportCommand implements ICommand {
     }
 
 
-    private double getPriorityWeight(String priority) {
-        if (priority == null) return 0.0;
+    private double getPriorityWeight(final String priority) {
+        if (priority == null) {
+            return 0.0;
+        }
         switch (priority) {
-            case "LOW": return 1.0;
-            case "MEDIUM": return 1.5;
-            case "HIGH": return 2.25;
-            case "CRITICAL": return 3.37;
+            case "LOW": return PRIO_LOW;
+            case "MEDIUM": return PRIO_MED;
+            case "HIGH": return PRIO_HIGH;
+            case "CRITICAL": return PRIO_CRIT;
             default: return 0.0;
         }
     }
 
-    private double getSeverityWeight(String severity) {
-        if (severity == null) return 0.0;
+    private double getSeverityWeight(final String severity) {
+        if (severity == null) {
+            return 0.0;
+        }
         switch (severity) {
-            case "LOW": return 1.0;
-            case "MODERATE": return 2.0;
-            case "SEVERE": return 4.0;
-            case "CRITICAL": return 8.0;
+            case "LOW": return SEV_LOW;
+            case "MODERATE": return SEV_MOD;
+            case "SEVERE": return SEV_SEV;
+            case "CRITICAL": return SEV_CRIT;
             default: return 0.0;
         }
     }
 
-    private double getFrequencyWeight(String frequency) {
-        if (frequency == null) return 0.0;
+    private double getFrequencyWeight(final String frequency) {
+        if (frequency == null) {
+            return 0.0;
+        }
         switch (frequency) {
-            case "RARE": return 1.0;
-            case "OCCASIONAL": return 2.0;
-            case "FREQUENT": return 3.0;
-            case "ALWAYS": return 4.0;
+            case "RARE": return FREQ_RARE;
+            case "OCCASIONAL": return FREQ_OCC;
+            case "FREQUENT": return FREQ_FREQ;
+            case "ALWAYS": return FREQ_ALWAYS;
             default: return 0.0;
         }
     }
 
-    private double getBusinessValueWeight(String val) {
-        if (val == null) return 0.0;
+    private double getBusinessValueWeight(final String val) {
+        if (val == null) {
+            return 0.0;
+        }
         switch (val) {
-            case "S": return 1.0;
-            case "M": return 2.0;
-            case "L": return 3.0;
-            case "XL": return 4.0;
+            case "S": return VAL_S;
+            case "M": return VAL_M;
+            case "L": return VAL_L;
+            case "XL": return VAL_XL;
             default: return 0.0;
         }
     }
 
-    private double getCustomerDemandWeight(String demand) {
-        if (demand == null) return 0.0;
+    private double getCustomerDemandWeight(final String demand) {
+        if (demand == null) {
+            return 0.0;
+        }
         switch (demand) {
-            case "LOW": return 1.0;
-            case "MEDIUM": return 2.0;
-            case "HIGH": return 3.0;
-            case "CRITICAL": return 4.0;
+            case "LOW": return DEM_LOW;
+            case "MEDIUM": return DEM_MED;
+            case "HIGH": return DEM_HIGH;
+            case "CRITICAL": return DEM_CRIT;
             default: return 0.0;
         }
     }

@@ -12,11 +12,11 @@ import cod.model.TicketAction;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ViewTicketHistoryCommand implements ICommand {
+public final class ViewTicketHistoryCommand implements ICommand {
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public ViewTicketHistoryCommand(JsonNode args) {
+    public ViewTicketHistoryCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -35,7 +35,9 @@ public class ViewTicketHistoryCommand implements ICommand {
 
         List<Ticket> relevantTickets = db.getTickets().stream()
                 .filter(t -> {
-                    if (username.equals(t.getAssignedTo())) return true;
+                    if (username.equals(t.getAssignedTo())) {
+                        return true;
+                    }
                     for (TicketAction action : t.getHistory()) {
                         if (username.equals(action.getBy())) {
                             return true;

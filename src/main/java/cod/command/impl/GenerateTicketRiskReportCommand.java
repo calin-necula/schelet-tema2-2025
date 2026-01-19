@@ -6,18 +6,29 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import cod.command.ICommand;
 import cod.database.Database;
 import cod.model.Ticket;
-import cod.model.enums.TicketType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GenerateTicketRiskReportCommand implements ICommand {
+public final class GenerateTicketRiskReportCommand implements ICommand {
+    private static final int DEFAULT_USABILITY = 10;
+    private static final int MAX_USABILITY = 10;
+
+    private static final double RISK_TH_LOW = 10.0;
+    private static final double RISK_TH_MOD = 25.0;
+    private static final double RISK_TH_MAJ = 50.0;
+
+    private static final int WEIGHT_LOW = 1;
+    private static final int WEIGHT_MED = 2;
+    private static final int WEIGHT_HIGH = 3;
+    private static final int WEIGHT_CRIT = 4;
+
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public GenerateTicketRiskReportCommand(JsonNode args) {
+    public GenerateTicketRiskReportCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -64,7 +75,8 @@ public class GenerateTicketRiskReportCommand implements ICommand {
 
             String priority = t.getBusinessPriority();
             if (priority != null) {
-                ticketsByPriority.put(priority, ticketsByPriority.getOrDefault(priority, 0) + 1);
+                ticketsByPriority.put(priority,
+                        ticketsByPriority.getOrDefault(priority, 0) + 1);
             }
 
             double score = calculateRiskScore(t);
@@ -82,9 +94,10 @@ public class GenerateTicketRiskReportCommand implements ICommand {
         ObjectNode riskNode = reportNode.putObject("riskByType");
         for (String type : scoresByType.keySet()) {
             List<Double> scores = scoresByType.get(type);
-            String label = "LOW"; // Default daca nu sunt tichete
+            String label = "LOW";
             if (!scores.isEmpty()) {
-                double avg = scores.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+                double avg = scores.stream().mapToDouble(Double::doubleValue)
+                        .average().orElse(0.0);
                 label = getRiskLabel(avg);
             }
             riskNode.put(type, label);
@@ -93,7 +106,7 @@ public class GenerateTicketRiskReportCommand implements ICommand {
         return result;
     }
 
-    private double calculateRiskScore(Ticket t) {
+    private double calculateRiskScore(final Ticket t) {
         int priority = getWeight(t.getBusinessPriority());
 
         switch (t.getType()) {
@@ -109,8 +122,9 @@ public class GenerateTicketRiskReportCommand implements ICommand {
 
             case UI_FEEDBACK:
                 int valUI = getWeight(t.getBusinessValue());
-                int usability = t.getUsabilityScore() != null ? t.getUsabilityScore() : 10;
-                int usabilityFactor = Math.max(0, 10 - usability);
+                int usability = t.getUsabilityScore() != null
+                        ? t.getUsabilityScore() : DEFAULT_USABILITY;
+                int usabilityFactor = Math.max(0, MAX_USABILITY - usability);
                 return priority * valUI * usabilityFactor;
 
             default:
@@ -118,20 +132,28 @@ public class GenerateTicketRiskReportCommand implements ICommand {
         }
     }
 
-    private String getRiskLabel(double score) {
-        if (score <= 10.0) return "LOW";
-        if (score <= 25.0) return "MODERATE";
-        if (score <= 50.0) return "MAJOR";
+    private String getRiskLabel(final double score) {
+        if (score <= RISK_TH_LOW) {
+            return "LOW";
+        }
+        if (score <= RISK_TH_MOD) {
+            return "MODERATE";
+        }
+        if (score <= RISK_TH_MAJ) {
+            return "MAJOR";
+        }
         return "CRITICAL";
     }
 
-    private int getWeight(String val) {
-        if (val == null) return 0;
+    private int getWeight(final String val) {
+        if (val == null) {
+            return 0;
+        }
         switch (val.toUpperCase()) {
-            case "LOW": case "RARE": case "S": return 1;
-            case "MEDIUM": case "OCCASIONAL": case "M": case "MODERATE": return 2;
-            case "HIGH": case "FREQUENT": case "L": case "SEVERE": return 3;
-            case "CRITICAL": case "ALWAYS": case "XL": return 4;
+            case "LOW": case "RARE": case "S": return WEIGHT_LOW;
+            case "MEDIUM": case "OCCASIONAL": case "M": case "MODERATE": return WEIGHT_MED;
+            case "HIGH": case "FREQUENT": case "L": case "SEVERE": return WEIGHT_HIGH;
+            case "CRITICAL": case "ALWAYS": case "XL": return WEIGHT_CRIT;
             default: return 0;
         }
     }

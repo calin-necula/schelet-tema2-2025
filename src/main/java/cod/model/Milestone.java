@@ -15,7 +15,9 @@ import java.util.stream.Collectors;
         "createdBy", "status", "isBlocked", "daysUntilDue", "overdueBy",
         "openTickets", "closedTickets", "completionPercentage", "repartition"
 })
-public class Milestone {
+public final class Milestone {
+    private static final double SCALE_100 = 100.0;
+
     private String name;
     private List<String> blockingFor = new ArrayList<>();
     private String dueDate;
@@ -25,51 +27,180 @@ public class Milestone {
     private String createdBy;
     private String status = "ACTIVE";
 
-    @JsonIgnore public int daysUntilDueVal = 0;
-    @JsonIgnore public int overdueByVal = 0;
+    @JsonIgnore
+    private int daysUntilDueVal = 0;
+    @JsonIgnore
+    private int overdueByVal = 0;
+    @JsonIgnore
+    private boolean notifiedDueTomorrow = false;
+    @JsonIgnore
+    private boolean unblockedNotified = false;
 
-    // --- Flag-uri Notificări ---
-    @JsonIgnore private boolean notifiedDueTomorrow = false;
-    @JsonIgnore private boolean unblockedNotified = false;
+    public Milestone() {
+    }
 
-    public Milestone() {}
+    /**
+     Gets the name of the milestone.
+     */
+    public String getName() {
+        return name;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public List<String> getBlockingFor() { return blockingFor; }
-    public void setBlockingFor(List<String> blockingFor) { this.blockingFor = blockingFor; }
-    public String getDueDate() { return dueDate; }
-    public void setDueDate(String dueDate) { this.dueDate = dueDate; }
-    public String getCreatedAt() { return createdAt; }
-    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
-    public List<Integer> getTickets() { return tickets; }
-    public void setTickets(List<Integer> tickets) { this.tickets = tickets; }
-    public List<String> getAssignedDevs() { return assignedDevs; }
-    public void setAssignedDevs(List<String> assignedDevs) { this.assignedDevs = assignedDevs; }
-    public String getCreatedBy() { return createdBy; }
-    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    /**
+     Sets the name of the milestone.
+     */
+    public void setName(final String name) {
+        this.name = name;
+    }
 
-    public boolean isNotifiedDueTomorrow() { return notifiedDueTomorrow; }
-    public void setNotifiedDueTomorrow(boolean notifiedDueTomorrow) { this.notifiedDueTomorrow = notifiedDueTomorrow; }
-    public boolean isUnblockedNotified() { return unblockedNotified; }
-    public void setUnblockedNotified(boolean unblockedNotified) { this.unblockedNotified = unblockedNotified; }
+    /**
+     Gets the list of milestones blocked by this one.
+     */
+    public List<String> getBlockingFor() {
+        return blockingFor;
+    }
 
+    /**
+     Sets the list of milestones blocked by this one.
+     */
+    public void setBlockingFor(final List<String> blockingFor) {
+        this.blockingFor = blockingFor;
+    }
+
+    /**
+     Gets the due date.
+     */
+    public String getDueDate() {
+        return dueDate;
+    }
+
+    /**
+     Sets the due date.
+     */
+    public void setDueDate(final String dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    /**
+     Gets the creation date.
+     */
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * Sets the creation date.
+     */
+    public void setCreatedAt(final String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     Gets the list of ticket IDs associated with this milestone.
+     */
+    public List<Integer> getTickets() {
+        return tickets;
+    }
+
+    /**
+     Sets the list of ticket IDs.
+     */
+    public void setTickets(final List<Integer> tickets) {
+        this.tickets = tickets;
+    }
+
+    /**
+     Gets the list of assigned developers.
+     */
+    public List<String> getAssignedDevs() {
+        return assignedDevs;
+    }
+
+    /**
+     Sets the list of assigned developers.
+     */
+    public void setAssignedDevs(final List<String> assignedDevs) {
+        this.assignedDevs = assignedDevs;
+    }
+
+    /**
+     Gets the creator's username.
+     */
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    /**
+     Sets the creator's username.
+     */
+    public void setCreatedBy(final String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    /**
+     Gets the status of the milestone.
+     */
+    public String getStatus() {
+        return status;
+    }
+
+    /**
+     Sets the status of the milestone.
+     */
+    public void setStatus(final String status) {
+        this.status = status;
+    }
+
+    /**
+     Checks if the due tomorrow notification was sent.
+     */
+    public boolean isNotifiedDueTomorrow() {
+        return notifiedDueTomorrow;
+    }
+
+    /**
+     Sets the due tomorrow notification flag.
+     */
+    public void setNotifiedDueTomorrow(final boolean notifiedDueTomorrow) {
+        this.notifiedDueTomorrow = notifiedDueTomorrow;
+    }
+
+    /**
+     Checks if the unblocked notification was sent.
+     */
+    public boolean isUnblockedNotified() {
+        return unblockedNotified;
+    }
+
+    /**
+     Sets the unblocked notification flag.
+     */
+    public void setUnblockedNotified(final boolean unblockedNotified) {
+        this.unblockedNotified = unblockedNotified;
+    }
+
+    /**
+     Checks if this milestone is blocked by other milestones.
+     */
     public boolean getIsBlocked() {
         Database db = Database.getInstance();
         for (Milestone other : db.getMilestones()) {
             if (other.getBlockingFor().contains(this.name)) {
                 boolean isBlockingActive = other.getTickets().stream()
-                        .map(id -> db.getTicket(id))
+                        .map(db::getTicket)
                         .anyMatch(t -> t != null && !"CLOSED".equals(t.getStatus()));
 
-                if (isBlockingActive) return true;
+                if (isBlockingActive) {
+                    return true;
+                }
             }
         }
         return false;
     }
 
+    /**
+     Checks if this milestone depends on other milestones.
+     */
     @JsonIgnore
     public boolean hasDependencies() {
         Database db = Database.getInstance();
@@ -81,9 +212,23 @@ public class Milestone {
         return false;
     }
 
-    public Integer getDaysUntilDue() { return this.daysUntilDueVal; }
-    public Integer getOverdueBy() { return this.overdueByVal; }
+    /**
+     Gets the number of days until the milestone is due.
+     */
+    public Integer getDaysUntilDue() {
+        return this.daysUntilDueVal;
+    }
 
+    /**
+     Gets the number of days the milestone is overdue.
+     */
+    public Integer getOverdueBy() {
+        return this.overdueByVal;
+    }
+
+    /**
+     Gets the list of open ticket IDs.
+     */
     public List<Integer> getOpenTickets() {
         Database db = Database.getInstance();
         return tickets.stream()
@@ -94,6 +239,9 @@ public class Milestone {
                 .collect(Collectors.toList());
     }
 
+    /**
+     Gets the list of closed ticket IDs.
+     */
     public List<Integer> getClosedTickets() {
         Database db = Database.getInstance();
         return tickets.stream()
@@ -104,12 +252,20 @@ public class Milestone {
                 .collect(Collectors.toList());
     }
 
+    /**
+     Calculates the completion percentage of the milestone.
+     */
     public Double getCompletionPercentage() {
-        if (tickets.isEmpty()) return 0.0;
+        if (tickets.isEmpty()) {
+            return 0.0;
+        }
         double closed = getClosedTickets().size();
-        return Math.round((closed / tickets.size()) * 100.0) / 100.0;
+        return Math.round((closed / tickets.size()) * SCALE_100) / SCALE_100;
     }
 
+    /**
+     Gets the repartition of tickets among developers.
+     */
     public List<RepartitionEntry> getRepartition() {
         Database db = Database.getInstance();
         List<RepartitionEntry> list = new ArrayList<>();
@@ -125,25 +281,42 @@ public class Milestone {
         return list;
     }
 
-    public static class RepartitionEntry {
-        public String developer;
-        public List<Integer> assignedTickets;
-        public RepartitionEntry(String dev, List<Integer> t) { this.developer = dev; this.assignedTickets = t; }
+    public static final class RepartitionEntry {
+        private String developer;
+        private List<Integer> assignedTickets;
+
+        public RepartitionEntry(final String dev, final List<Integer> t) {
+            this.developer = dev;
+            this.assignedTickets = t;
+        }
+
+        public String getDeveloper() {
+            return developer;
+        }
+
+        public List<Integer> getAssignedTickets() {
+            return assignedTickets;
+        }
     }
 
-    public void calculateTimeFields(String currentTimestamp) {
-        if (currentTimestamp == null || currentTimestamp.isEmpty()) return;
+    /**
+     Calculates time-related fields (daysUntilDue, overdueBy) based on current timestamp.
+     */
+    public void calculateTimeFields(final String currentTimestamp) {
+        if (currentTimestamp == null || currentTimestamp.isEmpty()) {
+            return;
+        }
 
         LocalDate comparisonDate = LocalDate.parse(currentTimestamp);
 
         if ("COMPLETED".equals(this.status)) {
             Database db = Database.getInstance();
             LocalDate maxSolved = null;
-            for(Integer tId : tickets) {
+            for (Integer tId : tickets) {
                 Ticket t = db.getTicket(tId);
-                if(t != null && t.getSolvedAt() != null && !t.getSolvedAt().isEmpty()) {
+                if (t != null && t.getSolvedAt() != null && !t.getSolvedAt().isEmpty()) {
                     LocalDate solved = LocalDate.parse(t.getSolvedAt());
-                    if(maxSolved == null || solved.isAfter(maxSolved)) {
+                    if (maxSolved == null || solved.isAfter(maxSolved)) {
                         maxSolved = solved;
                     }
                 }

@@ -12,11 +12,11 @@ import cod.utils.NotificationManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ViewNotificationsCommand implements ICommand {
+public final class ViewNotificationsCommand implements ICommand {
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public ViewNotificationsCommand(JsonNode args) {
+    public ViewNotificationsCommand(final JsonNode args) {
         this.args = args;
     }
 

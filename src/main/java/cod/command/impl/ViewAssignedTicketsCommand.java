@@ -9,15 +9,19 @@ import cod.database.Database;
 import cod.model.Ticket;
 import cod.model.User;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ViewAssignedTicketsCommand implements ICommand {
+public final class ViewAssignedTicketsCommand implements ICommand {
+    private static final int PRIORITY_LOW = 0;
+    private static final int PRIORITY_MEDIUM = 1;
+    private static final int PRIORITY_HIGH = 2;
+    private static final int PRIORITY_CRITICAL = 3;
+
     private final JsonNode args;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public ViewAssignedTicketsCommand(JsonNode args) {
+    public ViewAssignedTicketsCommand(final JsonNode args) {
         this.args = args;
     }
 
@@ -49,7 +53,9 @@ public class ViewAssignedTicketsCommand implements ICommand {
         assigned.sort((t1, t2) -> {
             int p1 = getPriorityValue(t1.getBusinessPriority());
             int p2 = getPriorityValue(t2.getBusinessPriority());
-            if (p1 != p2) return Integer.compare(p2, p1);
+            if (p1 != p2) {
+                return Integer.compare(p2, p1);
+            }
             return Integer.compare(t1.getId(), t2.getId());
         });
 
@@ -63,11 +69,19 @@ public class ViewAssignedTicketsCommand implements ICommand {
         return result;
     }
 
-    private int getPriorityValue(String p) {
-        if ("LOW".equals(p)) return 0;
-        if ("MEDIUM".equals(p)) return 1;
-        if ("HIGH".equals(p)) return 2;
-        if ("CRITICAL".equals(p)) return 3;
+    private int getPriorityValue(final String p) {
+        if ("LOW".equals(p)) {
+            return PRIORITY_LOW;
+        }
+        if ("MEDIUM".equals(p)) {
+            return PRIORITY_MEDIUM;
+        }
+        if ("HIGH".equals(p)) {
+            return PRIORITY_HIGH;
+        }
+        if ("CRITICAL".equals(p)) {
+            return PRIORITY_CRITICAL;
+        }
         return 0;
     }
 }

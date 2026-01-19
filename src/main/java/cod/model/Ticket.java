@@ -19,9 +19,12 @@ public class Ticket {
     private String businessPriority;
     private String status;
 
-    @JsonIgnore private String initialBusinessPriority;
-    @JsonIgnore private String expertiseArea;
-    @JsonIgnore private String description;
+    @JsonIgnore
+    private String initialBusinessPriority;
+    @JsonIgnore
+    private String expertiseArea;
+    @JsonIgnore
+    private String description;
 
     private String reportedBy = "";
     private String assignedTo = "";
@@ -31,100 +34,416 @@ public class Ticket {
 
     private List<Comment> comments = new ArrayList<>();
 
-    @JsonIgnore private List<TicketAction> history = new ArrayList<>();
+    @JsonIgnore
+    private List<TicketAction> history = new ArrayList<>();
 
-    @JsonIgnore private String severity;
-    @JsonIgnore private String expectedBehavior;
-    @JsonIgnore private String actualBehavior;
-    @JsonIgnore private String frequency;
-    @JsonIgnore private String environment;
-    @JsonIgnore private Integer errorCode;
-    @JsonIgnore private String businessValue;
-    @JsonIgnore private String customerDemand;
-    @JsonIgnore private String uiElementId;
-    @JsonIgnore private Integer usabilityScore;
-    @JsonIgnore private String suggestedFix;
+    @JsonIgnore
+    private String severity;
+    @JsonIgnore
+    private String expectedBehavior;
+    @JsonIgnore
+    private String actualBehavior;
+    @JsonIgnore
+    private String frequency;
+    @JsonIgnore
+    private String environment;
+    @JsonIgnore
+    private Integer errorCode;
+    @JsonIgnore
+    private String businessValue;
+    @JsonIgnore
+    private String customerDemand;
+    @JsonIgnore
+    private String uiElementId;
+    @JsonIgnore
+    private Integer usabilityScore;
+    @JsonIgnore
+    private String suggestedFix;
 
     public Ticket() {
         this.status = "OPEN";
     }
 
-    public void addHistory(TicketAction action) {
+    /**
+     Adds an action to the ticket's history.
+     */
+    public void addHistory(final TicketAction action) {
         this.history.add(action);
     }
 
+    /**
+     Gets the history of actions on this ticket.
+     */
     public List<TicketAction> getHistory() {
         return history;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-    public TicketType getType() { return type; }
-    public void setType(TicketType type) { this.type = type; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    /**
+     Gets the ticket ID.
+     */
+    public int getId() {
+        return id;
+    }
 
-    public String getBusinessPriority() { return businessPriority; }
-    public void setBusinessPriority(String businessPriority) {
+    /**
+     Sets the ticket ID.
+     */
+    public void setId(final int id) {
+        this.id = id;
+    }
+
+    /**
+     Gets the ticket type.
+     */
+    public TicketType getType() {
+        return type;
+    }
+
+    /**
+     Sets the ticket type.
+     */
+    public void setType(final TicketType type) {
+        this.type = type;
+    }
+
+    /**
+     Gets the ticket title.
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     Sets the ticket title.
+     */
+    public void setTitle(final String title) {
+        this.title = title;
+    }
+
+    /**
+     Gets the business priority.
+     */
+    public String getBusinessPriority() {
+        return businessPriority;
+    }
+
+    /**
+     Sets the business priority.
+     */
+    public void setBusinessPriority(final String businessPriority) {
         this.businessPriority = businessPriority;
         if (this.initialBusinessPriority == null) {
             this.initialBusinessPriority = businessPriority;
         }
     }
 
-    public void resetInitialPriority(String p) {
+    /**
+     Resets the initial priority and current priority to the specified value.
+     */
+    public void resetInitialPriority(final String p) {
         this.initialBusinessPriority = p;
         this.businessPriority = p;
     }
 
-    public String getInitialBusinessPriority() { return initialBusinessPriority; }
-    public void setComputedPriority(String priority) {
+    /**
+     Gets the initial business priority.
+     */
+    public String getInitialBusinessPriority() {
+        return initialBusinessPriority;
+    }
+
+    /**
+     Sets the computed priority.
+     */
+    public void setComputedPriority(final String priority) {
         this.businessPriority = priority;
     }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public String getExpertiseArea() { return expertiseArea; }
-    public void setExpertiseArea(String expertiseArea) { this.expertiseArea = expertiseArea; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public String getReportedBy() { return reportedBy; }
-    public void setReportedBy(String reportedBy) { this.reportedBy = reportedBy; }
-    public String getAssignedTo() { return assignedTo; }
-    public void setAssignedTo(String assignedTo) { this.assignedTo = assignedTo; }
-    public String getAssignedAt() { return assignedAt; }
-    public void setAssignedAt(String assignedAt) { this.assignedAt = assignedAt; }
-    public String getSolvedAt() { return solvedAt; }
-    public void setSolvedAt(String solvedAt) { this.solvedAt = solvedAt; }
-    public String getCreatedAt() { return createdAt; }
-    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+    /**
+     Gets the status.
+     */
+    public String getStatus() {
+        return status;
+    }
 
-    public List<Comment> getComments() { return comments; }
-    public void setComments(List<Comment> comments) { this.comments = comments; }
-    public void addComment(Comment comment) {
+    /**
+     Sets the status.
+     */
+    public void setStatus(final String status) {
+        this.status = status;
+    }
+
+    /**
+     Gets the expertise area.
+     */
+    public String getExpertiseArea() {
+        return expertiseArea;
+    }
+
+    /**
+     Sets the expertise area.
+     */
+    public void setExpertiseArea(final String expertiseArea) {
+        this.expertiseArea = expertiseArea;
+    }
+
+    /**
+     Gets the description.
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     Sets the description.
+     */
+    public void setDescription(final String description) {
+        this.description = description;
+    }
+
+    /**
+     Gets the reporter username.
+     */
+    public String getReportedBy() {
+        return reportedBy;
+    }
+
+    /**
+     Sets the reporter username.
+     */
+    public void setReportedBy(final String reportedBy) {
+        this.reportedBy = reportedBy;
+    }
+
+    /**
+     Gets the assignee username.
+     */
+    public String getAssignedTo() {
+        return assignedTo;
+    }
+
+    /**
+     Sets the assignee username.
+     */
+    public void setAssignedTo(final String assignedTo) {
+        this.assignedTo = assignedTo;
+    }
+
+    /**
+     Gets the assignment timestamp.
+     */
+    public String getAssignedAt() {
+        return assignedAt;
+    }
+
+    /**
+     Sets the assignment timestamp.
+     */
+    public void setAssignedAt(final String assignedAt) {
+        this.assignedAt = assignedAt;
+    }
+
+    /**
+     Gets the solved timestamp.
+     */
+    public String getSolvedAt() {
+        return solvedAt;
+    }
+
+    /**
+     Sets the solved timestamp.
+     */
+    public void setSolvedAt(final String solvedAt) {
+        this.solvedAt = solvedAt;
+    }
+
+    /**
+     Gets the creation timestamp.
+     */
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     Sets the creation timestamp.
+     */
+    public void setCreatedAt(final String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     Gets the list of comments.
+     */
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    /**
+     Sets the list of comments.
+     */
+    public void setComments(final List<Comment> comments) {
+        this.comments = comments;
+    }
+
+    /**
+     Adds a comment to the ticket.
+     */
+    public void addComment(final Comment comment) {
         this.comments.add(comment);
     }
 
-    public String getSeverity() { return severity; }
-    public void setSeverity(String severity) { this.severity = severity; }
-    public String getExpectedBehavior() { return expectedBehavior; }
-    public void setExpectedBehavior(String expectedBehavior) { this.expectedBehavior = expectedBehavior; }
-    public String getActualBehavior() { return actualBehavior; }
-    public void setActualBehavior(String actualBehavior) { this.actualBehavior = actualBehavior; }
-    public String getFrequency() { return frequency; }
-    public void setFrequency(String frequency) { this.frequency = frequency; }
-    public String getEnvironment() { return environment; }
-    public void setEnvironment(String environment) { this.environment = environment; }
-    public Integer getErrorCode() { return errorCode; }
-    public void setErrorCode(Integer errorCode) { this.errorCode = errorCode; }
-    public String getBusinessValue() { return businessValue; }
-    public void setBusinessValue(String businessValue) { this.businessValue = businessValue; }
-    public String getCustomerDemand() { return customerDemand; }
-    public void setCustomerDemand(String customerDemand) { this.customerDemand = customerDemand; }
-    public String getUiElementId() { return uiElementId; }
-    public void setUiElementId(String uiElementId) { this.uiElementId = uiElementId; }
-    public Integer getUsabilityScore() { return usabilityScore; }
-    public void setUsabilityScore(Integer usabilityScore) { this.usabilityScore = usabilityScore; }
-    public String getSuggestedFix() { return suggestedFix; }
-    public void setSuggestedFix(String suggestedFix) { this.suggestedFix = suggestedFix; }
+    /**
+     Gets the severity.
+     */
+    public String getSeverity() {
+        return severity;
+    }
+
+    /**
+     Sets the severity.
+     */
+    public void setSeverity(final String severity) {
+        this.severity = severity;
+    }
+
+    /**
+     Gets the expected behavior.
+     */
+    public String getExpectedBehavior() {
+        return expectedBehavior;
+    }
+
+    /**
+     Sets the expected behavior.
+     */
+    public void setExpectedBehavior(final String expectedBehavior) {
+        this.expectedBehavior = expectedBehavior;
+    }
+
+    /**
+     Gets the actual behavior.
+     */
+    public String getActualBehavior() {
+        return actualBehavior;
+    }
+
+    /**
+     Sets the actual behavior.
+     */
+    public void setActualBehavior(final String actualBehavior) {
+        this.actualBehavior = actualBehavior;
+    }
+
+    /**
+     Gets the frequency.
+     */
+    public String getFrequency() {
+        return frequency;
+    }
+
+    /**
+     Sets the frequency.
+     */
+    public void setFrequency(final String frequency) {
+        this.frequency = frequency;
+    }
+
+    /**
+     Gets the environment.
+     */
+    public String getEnvironment() {
+        return environment;
+    }
+
+    /**
+     Sets the environment.
+     */
+    public void setEnvironment(final String environment) {
+        this.environment = environment;
+    }
+
+    /**
+     Gets the error code.
+     */
+    public Integer getErrorCode() {
+        return errorCode;
+    }
+
+    /**
+     Sets the error code.
+     */
+    public void setErrorCode(final Integer errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    /**
+     Gets the business value.
+     */
+    public String getBusinessValue() {
+        return businessValue;
+    }
+
+    /**
+     Sets the business value.
+     */
+    public void setBusinessValue(final String businessValue) {
+        this.businessValue = businessValue;
+    }
+
+    /**
+     Gets the customer demand.
+     */
+    public String getCustomerDemand() {
+        return customerDemand;
+    }
+
+    /**
+     Sets the customer demand.
+
+     */
+    public void setCustomerDemand(final String customerDemand) {
+        this.customerDemand = customerDemand;
+    }
+
+    /**
+     Gets the UI element ID.
+     */
+    public String getUiElementId() {
+        return uiElementId;
+    }
+
+    /**
+     Sets the UI element ID.
+     */
+    public void setUiElementId(final String uiElementId) {
+        this.uiElementId = uiElementId;
+    }
+
+    /**
+     Gets the usability score.
+     */
+    public Integer getUsabilityScore() {
+        return usabilityScore;
+    }
+
+    /**
+     Sets the usability score.
+     */
+    public void setUsabilityScore(final Integer usabilityScore) {
+        this.usabilityScore = usabilityScore;
+    }
+
+    /**
+     Gets the suggested fix.
+     */
+    public String getSuggestedFix() {
+        return suggestedFix;
+    }
+
+    /**
+     Sets the suggested fix.
+     */
+    public void setSuggestedFix(final String suggestedFix) {
+        this.suggestedFix = suggestedFix;
+    }
 }
